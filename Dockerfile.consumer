@@ -1,0 +1,29 @@
+# docker build -t webux-consumer -f Dockerfile.consumer .
+# docker run -it --rm --name consumer --env-file ./.env.prod webux-consumer:latest
+FROM denoland/deno:1.46.3
+
+WORKDIR /application
+
+# Environment Variables
+ENV NODE_ENV=production
+# ENV MONGO_DB_URL
+# ENV OGMIOS_HOST
+# ENV OGMIOS_PORT
+# ENV KAFKA_HOSTS
+
+
+# CORE Component
+COPY ./src/shared /application/src/shared
+COPY ./src/mod.ts /application/src/mod.ts
+COPY ./deno.json /application/deno.json
+COPY ./deno.lock /application/deno.lock
+
+# APP Specific
+COPY ./app/processor /application/app/processor
+
+# Database Specific
+COPY ./app/database /application/app/database
+
+RUN deno cache /application/app/processor/index.ts
+
+CMD ["deno", "run", "-A", "/application/app/processor/index.ts"]

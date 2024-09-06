@@ -1,0 +1,24 @@
+{
+  "name": "@studiowebux/cindexer",
+  "version": "0.0.1",
+  "exports": "./src/mod.ts",
+  "imports": {
+    "@cardano-ogmios/client": "npm:@cardano-ogmios/client",
+    "@cardano-ogmios/schema": "npm:@cardano-ogmios/schema",
+    "@emurgo/cardano-serialization-lib-nodejs": "npm:@emurgo/cardano-serialization-lib-nodejs@12.0.1",
+    "@studiowebux/deno-minilog": "jsr:@studiowebux/deno-minilog@^0.1.0",
+    "dotenv": "https://deno.land/std@0.224.0/dotenv/mod.ts",
+    "kafkajs": "npm:kafkajs",
+    "mongodb": "npm:mongodb",
+    "prom-client": "npm:prom-client",
+    "load": "jsr:@std/dotenv/load",
+    "zod": "https://deno.land/x/zod@v3.23.8/mod.ts"
+  },
+  "tasks": {
+    "init:db": "deno run -A app/database/init.ts",
+    "start:indexer": "deno run -A app/indexer/index.ts",
+    "start:processor": "deno run -A app/processor/index.ts",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d"
+  }
+}

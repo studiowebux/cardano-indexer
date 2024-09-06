@@ -1,0 +1,29 @@
+# docker build -t webux-cindexer -f Dockerfile.indexer .
+# docker run -it --rm --name cindexer --env-file ./.env.prod webux-cindexer:latest
+FROM denoland/deno:1.46.3
+
+WORKDIR /application
+
+# Environment Variables
+ENV NODE_ENV=production
+# ENV MONGO_DB_URL
+# ENV OGMIOS_HOST
+# ENV OGMIOS_PORT
+# ENV KAFKA_HOSTS
+
+# CORE Component
+COPY ./src/core /application/src/core
+COPY ./src/shared /application/src/shared
+COPY ./src/mod.ts /application/src/mod.ts
+COPY ./deno.json /application/deno.json
+COPY ./deno.lock /application/deno.lock
+
+# APP Specific
+COPY ./app/indexer /application/app/indexer
+
+# Database Specific
+COPY ./app/database /application/app/database
+
+RUN deno cache /application/app/indexer/index.ts
+
+CMD ["deno", "run", "-A", "/application/app/indexer/index.ts"]
