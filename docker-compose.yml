@@ -47,19 +47,19 @@ services:
     depends_on:
       - zoo1
 
-  # indexer:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.indexer
-  #   env_file: ./.env.prod
-  #   depends_on:
-  #     - mongo
-  #     - kafka1
+  indexer:
+    build:
+      context: .
+      dockerfile: Dockerfile.indexer
+    env_file: ./.env.prod
+    depends_on:
+      - mongo
+      - kafka1
 
-  # consumer:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.consumer
-  #   env_file: ./.env.prod
-  #   depends_on:
-  #     - indexer
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer
+    env_file: ./.env.prod
+    depends_on:
+      - indexer

@@ -81,3 +81,13 @@ export async function rollback_blocks(
     throw new Error(error);
   }
 }
+
+export async function get_cursor(): Promise<{
+  id: string;
+  cursor_id: string;
+  last_updated_at: string;
+  slot: number;
+}> {
+  const result = await cursor_collection.findOne({ id: "cursor" });
+  return result;
+}

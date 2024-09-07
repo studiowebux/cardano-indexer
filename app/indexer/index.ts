@@ -6,7 +6,7 @@ import { Indexer } from "../../src/core/indexer/index.ts";
 
 // Application Specific
 // Linked with the database lib.
-import { upsert_cursor } from "../database/queries.ts";
+import { get_cursor, upsert_cursor } from "../database/queries.ts";
 
 // USAGE
 
@@ -20,15 +20,21 @@ hooks.Enable(
   ),
 );
 
+// const start = [
+//   {
+//     slot: 84335007,
+//     id: "180a1ef2ccf3e86d5fae1701e5654ed219b0f46441880adef92b5377831a330a",
+//   },
+// ]
+
+// const start = ["origin"]
+
+const start = await get_cursor();
+
 const indexer = new Indexer(
   hooks,
   logger,
-  [
-    {
-      slot: 84335007,
-      id: "180a1ef2ccf3e86d5fae1701e5654ed219b0f46441880adef92b5377831a330a",
-    },
-  ],
+  [{ id: start.cursor_id, slot: start.slot }],
   6,
   upsert_cursor,
   60 * 1000 * 15, // every 15 minutes snapshot the cursor in case it crashes, it will start from the cursor.
