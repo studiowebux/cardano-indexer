@@ -1,9 +1,9 @@
-import Logger from "@studiowebux/deno-minilog";
+import type Logger from "@studiowebux/deno-minilog";
 
 // Handlers
 import { handle_block } from "./handlers/block.ts";
 import { handle_rollback } from "./handlers/rollback.ts";
-import { ProcessorInput } from "../../src/shared/types.ts";
+import type { ProcessorInput } from "../../src/shared/types.ts";
 
 export async function processMessage(
   logger: Logger,

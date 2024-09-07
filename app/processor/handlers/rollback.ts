@@ -1,9 +1,9 @@
-import Logger from "@studiowebux/deno-minilog";
+import type Logger from "@studiowebux/deno-minilog";
 
 // Application Specific
 // Linked with the database lib.
 import { rollback_blocks } from "../../database/queries.ts";
-import { ProcessorInput } from "../../../src/shared/types.ts";
+import type { ProcessorInput } from "../../../src/shared/types.ts";
 import { blocks_collection } from "../../database/db.ts";
 
 export async function handle_rollback(logger: Logger, data: ProcessorInput) {

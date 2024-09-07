@@ -1,4 +1,4 @@
-import { Block, Origin, Tip } from "@cardano-ogmios/schema";
+import type { Block, Origin, Tip } from "@cardano-ogmios/schema";
 
 export type Cursor = { id: string; slot: number };
 
@@ -18,10 +18,11 @@ export type Match = {
   policy_id?: string;
   wallet_address?: string;
   rollback?: Tip | Origin;
+  id: string;
 };
 
 export type ProcessorInput = {
   block: LocalBlock | null;
-  matches: Match[];
+  matches: Record<string, Match>;
   rollback: Tip | Origin | undefined;
 };

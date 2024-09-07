@@ -1,5 +1,5 @@
 import { createInteractionContext } from "@cardano-ogmios/client";
-import Logger from "@studiowebux/deno-minilog";
+import type Logger from "@studiowebux/deno-minilog";
 
 import { env } from "../../shared/env.ts";
 

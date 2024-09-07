@@ -1,29 +1,37 @@
-import { Origin, Point, Tip } from "@cardano-ogmios/schema";
+import type { Origin, Point, Tip } from "@cardano-ogmios/schema";
 import {
+  type ChainSynchronization,
   createChainSynchronizationClient,
   getServerHealth,
 } from "@cardano-ogmios/client";
-import PromClient, { Counter, Gauge, Histogram } from "prom-client";
-import { Producer } from "kafkajs";
-import Logger from "@studiowebux/deno-minilog";
-import { Document, UpdateResult } from "mongodb";
+import PromClient, { type Counter, type Gauge, type Histogram } from "prom-client";
+import type { Producer } from "kafkajs";
+import type Logger from "@studiowebux/deno-minilog";
+import type { Document, UpdateResult } from "mongodb";
 import { hrtime } from "node:process";
 
-import { Cursor, LocalBlock, Match } from "../../shared/types.ts";
+import type { Cursor, LocalBlock, Match } from "../../shared/types.ts";
 import { kafkaProducer } from "../../shared/kafka/index.ts";
 import { BLOCK_TOPIC } from "../../shared/constant.ts";
 
-import { Hooks } from "../hook/index.ts";
+import type { Hooks } from "../hook/index.ts";
 import { context } from "../ogmios/context.ts";
 import { replacer } from "../utils/index.ts";
+import {
+  indexer_running,
+  processing_counter,
+  processing_histogram,
+  published_counter,
+} from "../../shared/prometheus/index.ts";
 
 export class Indexer {
-  private client: any; // ogmios client
+  private client: ChainSynchronization.ChainSynchronizationClient | null = null; // ogmios client
   private producer: Producer; // kafka producer
   private start_point: string[] | Cursor[] = [];
   private current_intersection: Cursor | null = null;
   private queued_intersection: Cursor | null = null;
-  private local_queue: { block: LocalBlock; matches: Match[] }[] = [];
+  private local_queue: { block: LocalBlock; matches: Record<string, Match> }[] =
+    [];
   private block_to_wait: number = 6;
   private hooks: Hooks;
   private tip_synced: boolean = false;
@@ -90,26 +98,10 @@ export class Indexer {
     });
 
     this.prom_client = PromClient;
-    this.processing_histogram = new this.prom_client.Histogram({
-      name: "processing_ms",
-      help: "The latency of processing blocks.",
-      labelNames: ["task"],
-      buckets: [0.001, 0.005, 0.01, 0.05, 1, 3],
-    });
-    this.processing_counter = new this.prom_client.Counter({
-      name: "block_processed",
-      help: "Number of block processed.",
-      labelNames: ["task"],
-    });
-    this.published_counter = new this.prom_client.Counter({
-      name: "block_published",
-      help: "Number of block published to kafka.",
-      labelNames: ["task"],
-    });
-    this.indexer_running = new this.prom_client.Gauge({
-      name: "indexer_running",
-      help: "Track indexer running or not.",
-    });
+    this.processing_histogram = processing_histogram;
+    this.processing_counter = processing_counter;
+    this.published_counter = published_counter;
+    this.indexer_running = indexer_running;
 
     setInterval(async () => {
       this.logger.info("Saving cursor to database.");
@@ -127,12 +119,12 @@ export class Indexer {
       this.published_counter.reset();
       this.indexer_running.reset();
 
-      const intersection = await this.client.resume(
+      const intersection = await this.client?.resume(
         this.start_point as Point[],
       );
       this.logger.info("Ogmios Client Started.");
       this.indexer_running.set(1);
-      this.current_intersection = intersection.intersection as Cursor;
+      this.current_intersection = intersection?.intersection as Cursor;
       this.status.started_at = new Date();
       this.status.stopped_at = undefined;
       this.status.state = "ACTIVE";
@@ -142,7 +134,7 @@ export class Indexer {
   }
 
   async Stop(): Promise<Indexer> {
-    await this.client.shutdown();
+    await this.client?.shutdown();
     this.logger.info("Ogmios Client Stopped.");
     await this.producer.disconnect();
     this.logger.info("Kafka Producer Stopped.");
@@ -252,8 +244,8 @@ export class Indexer {
   }
 
   async ConnectAndStart(): Promise<Indexer> {
-    await this.producer.connect();
     this.logger.info("Connect and start the indexer.");
+    await this.producer.connect();
     return this;
   }
 
@@ -280,7 +272,7 @@ export class Indexer {
 
   async Process(block: LocalBlock) {
     const matches = await this.hooks.Match(block);
-    if (matches.some((match) => match.matches)) {
+    if (Object.values(matches).some((match) => match.matches)) {
       const data = {
         block,
         matches,
@@ -294,7 +286,7 @@ export class Indexer {
     }
   }
 
-  async Publish(data: { block: LocalBlock; matches: Match[] }) {
+  async Publish(data: { block: LocalBlock; matches: Record<string, Match> }) {
     await this.producer.send({
       topic: BLOCK_TOPIC,
       messages: [{ key: data.block.id, value: JSON.stringify(data, replacer) }],
@@ -351,7 +343,7 @@ export class Indexer {
           value: JSON.stringify(
             {
               block: null,
-              matches: [],
+              matches: {},
               rollback: tip,
             },
             replacer,

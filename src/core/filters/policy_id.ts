@@ -1,4 +1,4 @@
-import Logger from "@studiowebux/deno-minilog";
+import type Logger from "@studiowebux/deno-minilog";
 import type { LocalBlock, Transaction } from "../../shared/types.ts";
 import { Filter } from "./index.ts";
 
@@ -25,8 +25,14 @@ export class PolicyId extends Filter {
       this.logger.info(
         `policy id ${this.policy_id} found in block height: ${block.height}`,
       );
-      return [{ matches: true, policy_id: this.policy_id }];
+      return {
+        [this.id]: {
+          matches: true,
+          policy_id: this.policy_id,
+          id: this.id,
+        },
+      };
     }
-    return [{ matches: false }];
+    return { [this.id]: { matches: false, id: this.id } };
   }
 }

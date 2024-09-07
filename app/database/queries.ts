@@ -1,7 +1,7 @@
-import { Collection, Document, Filter } from "mongodb";
-import Logger from "@studiowebux/deno-minilog";
+import type { Collection, Document, Filter } from "mongodb";
+import type Logger from "@studiowebux/deno-minilog";
 
-import { Cursor, LocalBlock } from "../../src/shared/types.ts";
+import type { Cursor, LocalBlock } from "../../src/shared/types.ts";
 import { cursor_collection, blocks_collection } from "./db.ts";
 
 export async function upsert_cursor(logger: Logger, cursor: Cursor | "origin") {
@@ -9,10 +9,10 @@ export async function upsert_cursor(logger: Logger, cursor: Cursor | "origin") {
     await delete_all_documents(logger, cursor_collection);
     return;
   }
-  const query = { _id: "cursor" };
+  const query = { id: "cursor" };
   const update = {
     $set: {
-      id: cursor.id,
+      cursor_id: cursor.id,
       slot: cursor.slot,
       last_updated_at: new Date(),
     },
@@ -22,7 +22,7 @@ export async function upsert_cursor(logger: Logger, cursor: Cursor | "origin") {
 }
 
 export function upsert_block(block: LocalBlock) {
-  const query = { _id: block.id };
+  const query = { id: block.id };
   const update = {
     $set: {
       ...block,

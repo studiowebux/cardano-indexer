@@ -1,4 +1,4 @@
-import Logger from "@studiowebux/deno-minilog";
+import type Logger from "@studiowebux/deno-minilog";
 import type { LocalBlock, Match } from "../../shared/types.ts";
 import type { IFilter } from "../types.ts";
 
@@ -8,11 +8,12 @@ export class Filter implements IFilter {
 
   constructor(id: string, logger: Logger) {
     this.id = id;
-
     this.logger = logger;
   }
 
-  Match(_block: LocalBlock): Match[] {
+  Match(
+    _block: LocalBlock,
+  ): Promise<Record<string, Match>> | Record<string, Match> {
     throw new Error("Not implemented");
   }
 }

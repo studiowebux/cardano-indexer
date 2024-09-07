@@ -1,6 +1,6 @@
-import Logger from "@studiowebux/deno-minilog";
+import type Logger from "@studiowebux/deno-minilog";
 
-import { LocalBlock } from "../../../src/shared/types.ts";
+import type { LocalBlock } from "../../../src/shared/types.ts";
 
 // Application Specific
 // Linked with the database lib.
