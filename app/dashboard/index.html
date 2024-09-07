@@ -61,12 +61,25 @@
                         >
                             Stop
                         </button>
+                        <button
+                            hx-post="http://192.168.20.105:3310/snapshot"
+                            hx-target="#indexer-snapshot"
+                            hx-swap="innerHTML"
+                            hx-indicator="#loading"
+                        >
+                            Snapshot
+                        </button>
                     </div>
                     <footer>
                         <p
                             id="indexer-status"
                             hx-get="http://192.168.20.105:3310/status"
                             hx-trigger="revealed, every 15s"
+                        ></p>
+                        <p
+                            id="indexer-snapshot"
+                            hx-get="http://192.168.20.105:3310/cursor"
+                            hx-trigger="revealed, every 30s"
                         ></p>
                     </footer>
                 </article>

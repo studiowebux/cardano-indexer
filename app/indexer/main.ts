@@ -81,6 +81,15 @@ app.post("/start", async (c: Context) => {
   return c.json(indexer.GetStatus());
 });
 
+app.post("/snapshot", async (c: Context) => {
+  await indexer.SaveCursor();
+  return c.json(indexer.GetCurrentIntersection());
+});
+
+app.get("/cursor", (c: Context) => {
+  return c.json(indexer.GetCurrentIntersection());
+});
+
 Deno.serve({ port: 3310 }, app.fetch);
 
 Deno.addSignalListener("SIGINT", async () => {
