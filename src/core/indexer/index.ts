@@ -30,6 +30,8 @@ import {
   processing_counter,
   processing_histogram,
   published_counter,
+  local_queue_size,
+  indexer_tip_synced,
 } from "../../shared/prometheus/indexer.ts";
 
 export class Indexer {
@@ -64,6 +66,8 @@ export class Indexer {
   private indexer_running: Gauge;
   private indexer_tip_slot: Gauge;
   private indexer_tip_height: Gauge;
+  private local_queue_size: Gauge;
+  private indexer_tip_synced: Gauge;
 
   constructor(
     hooks: Hooks,
@@ -113,6 +117,8 @@ export class Indexer {
     this.indexer_tip_slot = indexer_tip_slot;
     this.indexer_tip_height = indexer_tip_height;
     this.block_size_histogram = block_size_histogram;
+    this.local_queue_size = local_queue_size;
+    this.indexer_tip_synced = indexer_tip_synced;
 
     setInterval(async () => {
       this.logger.info("Saving cursor to database.");
@@ -132,6 +138,8 @@ export class Indexer {
       this.indexer_tip_slot.reset();
       this.indexer_tip_height.reset();
       this.block_size_histogram.reset();
+      this.local_queue_size.reset();
+      this.indexer_tip_synced.reset();
 
       const intersection = await this.client?.resume(
         this.start_point as Point[],
@@ -148,21 +156,29 @@ export class Indexer {
   }
 
   async Stop(): Promise<Indexer> {
-    if (this.status.state === "INACTIVE") {
-      this.logger.warn("Indexer already stopped.");
-      return this;
+    try {
+      if (this.status.state === "INACTIVE") {
+        this.logger.warn("Indexer already stopped.");
+        return this;
+      }
+      await this.client?.shutdown();
+      this.client = null;
+      this.logger.info("Ogmios Client Stopped.");
+      await this.producer.disconnect();
+      this.logger.info("Kafka Producer Stopped.");
+
+      this.status.started_at = undefined;
+      this.status.stopped_at = new Date();
+      this.status.state = "INACTIVE";
+
+      await this.SaveCursor();
+      this.indexer_running.set(0);
+      this.indexer_tip_synced.set(0);
+    } catch (e) {
+      this.logger.error("Failed to stop indexer");
+      console.error(e);
+      this.logger.error(e);
     }
-    await this.client?.shutdown();
-    this.logger.info("Ogmios Client Stopped.");
-    await this.producer.disconnect();
-    this.logger.info("Kafka Producer Stopped.");
-
-    this.status.started_at = undefined;
-    this.status.stopped_at = new Date();
-    this.status.state = "INACTIVE";
-
-    await this.SaveCursor();
-    this.indexer_running.set(0);
 
     return this;
   }
@@ -226,13 +242,16 @@ export class Indexer {
 
       if (tip !== "origin" && tip.slot === block.slot) {
         if (this.tip_synced === false) {
+          this.indexer_tip_synced.set(1);
           this.logger.info("Tip is synced", tip);
         }
         this.tip_synced = true;
       } else {
         if (this.tip_synced === true) {
+          this.indexer_tip_synced.set(0);
           this.logger.warn("Tip is out of synced", tip);
         }
+
         this.tip_synced = false;
       }
 
@@ -272,6 +291,8 @@ export class Indexer {
         this.current_intersection = null;
         this.local_queue = [];
       }
+
+      this.local_queue_size.set(this.local_queue.length);
 
       this.tip_synced = false;
 
@@ -350,6 +371,7 @@ export class Indexer {
         // Queue locally
         if (this.block_to_wait > 0) {
           this.local_queue.push(data);
+          this.local_queue_size.set(this.local_queue.length);
         } else {
           await this.Publish(data);
         }
@@ -415,6 +437,8 @@ export class Indexer {
         this.local_queue = this.local_queue.filter(
           (lq) => !processed_blocks.includes(lq.block.id),
         );
+        this.local_queue_size.set(this.local_queue.length);
+
         // Tracking the queue intersection to save the cursor at the correct location to avoid losing queued blocks.
         if (this.local_queue.length > 0) {
           this.queued_intersection = {

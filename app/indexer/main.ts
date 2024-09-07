@@ -1,5 +1,6 @@
 import { Hono, type Context } from "hono";
 import { logger as hono_logger } from "hono/logger";
+import { cors } from "hono/cors";
 import PromClient from "prom-client";
 
 import Logger from "@studiowebux/deno-minilog";
@@ -11,6 +12,7 @@ import { get_cursor, upsert_cursor } from "../database/queries.ts";
 
 const app = new Hono();
 
+app.use("/*", cors());
 app.use(hono_logger());
 
 const logger = new Logger();
@@ -79,7 +81,7 @@ app.post("/start", async (c: Context) => {
   return c.json(indexer.GetStatus());
 });
 
-Deno.serve({ port: 3010 }, app.fetch);
+Deno.serve({ port: 3310 }, app.fetch);
 
 Deno.addSignalListener("SIGINT", async () => {
   logger.warn("SIGINT!");

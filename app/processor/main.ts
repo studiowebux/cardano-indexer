@@ -1,6 +1,6 @@
 import { Hono, type Context } from "hono";
 import { logger as hono_logger } from "hono/logger";
-
+import { cors } from "hono/cors";
 import Logger from "@studiowebux/deno-minilog";
 
 import { hrtime } from "node:process";
@@ -18,6 +18,7 @@ import type { Status } from "../../src/shared/types.ts";
 
 const app = new Hono();
 
+app.use("/*", cors());
 app.use(hono_logger());
 
 const logger = new Logger();
@@ -49,11 +50,13 @@ app.post("/stop", async (c: Context) => {
   return c.json(status);
 });
 
-app.post("/start", async (c: Context) => {
+app.post("/start", (c: Context) => {
   status.state = "ACTIVE";
   status.started_at = new Date();
   status.stopped_at = undefined;
-  await consumer.run({
+
+  // Fire and Forget.
+  consumer.run({
     // topic, partition, heartbeat
     eachMessage: async ({ message, pause }) => {
       const start = hrtime();
@@ -79,7 +82,7 @@ app.post("/start", async (c: Context) => {
   return c.json(status);
 });
 
-Deno.serve({ port: 3020 }, app.fetch);
+Deno.serve({ port: 3320 }, app.fetch);
 
 Deno.addSignalListener("SIGINT", async () => {
   logger.warn("SIGINT!");

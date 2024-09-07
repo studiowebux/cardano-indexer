@@ -41,3 +41,13 @@ export const indexer_tip_height = new prom_client.Gauge({
   name: "indexer_tip_height",
   help: "Track indexer tip (height).",
 });
+
+export const local_queue_size = new prom_client.Gauge({
+  name: "indexer_local_queue_size",
+  help: "Track indexer Local queue.",
+});
+
+export const indexer_tip_synced = new prom_client.Gauge({
+  name: "indexer_tip_synced",
+  help: "Track indexer Tip synchronosity.",
+});

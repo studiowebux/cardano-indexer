@@ -1,6 +1,6 @@
 [
   {
-    "targets": ["indexer:3010"],
+    "targets": ["indexer:3310"],
     "labels": {
       "alias": "indexer",
       "service": "indexer",
@@ -8,7 +8,7 @@
     }
   },
   {
-    "targets": ["processor:3020"],
+    "targets": ["processor:3320"],
     "labels": {
       "alias": "processor",
       "service": "processor",

@@ -13,7 +13,6 @@ export const context = async (logger: Logger, indexer?: Indexer) =>
     },
     () => {
       logger.warn("Ogmios Connection Closed.");
-      indexer?.Stop();
     },
     {
       connection: {

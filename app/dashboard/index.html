@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Webux Cardano Indexer</title>
+
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+        />
+        <script
+            src="https://unpkg.com/htmx.org@2.0.2/dist/htmx.js"
+            integrity="sha384-yZq+5izaUBKcRgFbxgkRYwpHhHHCpp5nseXp0MEQ1A4MTWVMnqkmcuFez8x5qfxr"
+            crossorigin="anonymous"
+        ></script>
+
+        <script>
+            htmx.config.selfRequestsOnly = false;
+        </script>
+
+        <style>
+            .htmx-indicator {
+                display: none;
+            }
+            .htmx-request .htmx-indicator {
+                display: inline;
+            }
+            .htmx-request.htmx-indicator {
+                display: inline;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Webux Cardano Indexer</h1>
+            </header>
+            <main>
+                <div class="htmx-indicator" id="loading">
+                    <progress />
+                    <strong>Working on it ...</strong>
+                </div>
+
+                <article>
+                    <header>Indexer</header>
+                    <div>
+                        <button
+                            hx-post="http://192.168.20.105:3310/start"
+                            hx-target="#indexer-status"
+                            hx-swap="innerHTML"
+                            hx-indicator="#loading"
+                        >
+                            Start
+                        </button>
+                        <button
+                            hx-post="http://192.168.20.105:3310/stop"
+                            hx-target="#indexer-status"
+                            hx-swap="innerHTML"
+                            hx-indicator="#loading"
+                        >
+                            Stop
+                        </button>
+                    </div>
+                    <footer>
+                        <p
+                            id="indexer-status"
+                            hx-get="http://192.168.20.105:3310/status"
+                            hx-trigger="revealed, every 15s"
+                        ></p>
+                    </footer>
+                </article>
+
+                <article>
+                    <header>Processor (Consumer)</header>
+                    <div>
+                        <button
+                            hx-post="http://192.168.20.105:3320/start"
+                            hx-target="#processor-status"
+                            hx-swap="innerHTML"
+                            hx-indicator="#loading"
+                        >
+                            Start
+                        </button>
+                        <button
+                            hx-post="http://192.168.20.105:3320/stop"
+                            hx-target="#processor-status"
+                            hx-swap="innerHTML"
+                            hx-indicator="#loading"
+                        >
+                            Stop
+                        </button>
+                    </div>
+                    <footer>
+                        <p
+                            id="processor-status"
+                            hx-get="http://192.168.20.105:3320/status"
+                            hx-trigger="revealed, every 15s"
+                        ></p>
+                    </footer>
+                </article>
+            </main>
+        </div>
+    </body>
+</html>

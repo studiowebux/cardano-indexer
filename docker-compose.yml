@@ -79,7 +79,7 @@ services:
     env_file: ./.env.prod
     restart: unless-stopped
     ports:
-      - 3010:3010
+      - 3310:3310
     depends_on:
       mongo:
         condition: service_healthy
@@ -92,7 +92,7 @@ services:
       dockerfile: Dockerfile.processor
     env_file: ./.env.prod
     ports:
-      - 3020:3020
+      - 3320:3320
     restart: unless-stopped
     depends_on:
       - indexer
