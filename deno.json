@@ -12,13 +12,18 @@
     "mongodb": "npm:mongodb",
     "prom-client": "npm:prom-client",
     "load": "jsr:@std/dotenv/load",
-    "zod": "https://deno.land/x/zod@v3.23.8/mod.ts"
+    "zod": "https://deno.land/x/zod@v3.23.8/mod.ts",
+    "hono": "jsr:@hono/hono@^4.5.11"
   },
   "tasks": {
     "init:db": "deno run -A app/database/init.ts",
-    "start:indexer": "deno run -A app/indexer/index.ts",
+    "start:indexer": "deno run -A app/indexer/main.ts",
     "start:processor": "deno run -A app/processor/index.ts",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d"
+  },
+  "compilerOptions": {
+    "jsx": "precompile",
+    "jsxImportSource": "hono/jsx"
   }
 }

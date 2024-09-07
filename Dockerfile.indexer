@@ -24,6 +24,6 @@ COPY ./app/indexer /application/app/indexer
 # Database Specific
 COPY ./app/database /application/app/database
 
-RUN deno cache /application/app/indexer/index.ts
+RUN deno cache /application/app/indexer/main.ts
 
-CMD ["deno", "run", "-A", "/application/app/indexer/index.ts"]
+CMD ["deno", "run", "-A", "/application/app/indexer/main.ts"]

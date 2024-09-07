@@ -1,0 +1,26 @@
+[
+  {
+    "targets": ["indexer:3010"],
+    "labels": {
+      "alias": "indexer",
+      "service": "indexer",
+      "__metrics_path__": "/metrics"
+    }
+  },
+  {
+    "targets": ["processor:3020"],
+    "labels": {
+      "alias": "processor",
+      "service": "processor",
+      "__metrics_path__": "/metrics"
+    }
+  },
+  {
+    "targets": ["192.168.100.102:1344"],
+    "labels": {
+      "alias": "ogmios",
+      "service": "ogmios",
+      "__metrics_path__": "/metrics"
+    }
+  }
+]

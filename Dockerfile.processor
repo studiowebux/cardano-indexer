@@ -1,5 +1,5 @@
-# docker build -t webux-consumer -f Dockerfile.consumer .
-# docker run -it --rm --name consumer --env-file ./.env.prod webux-consumer:latest
+# docker build -t webux-processor -f Dockerfile.processor .
+# docker run -it --rm --name processor --env-file ./.env.prod webux-processor:latest
 FROM denoland/deno:1.46.3
 
 WORKDIR /application
@@ -24,6 +24,6 @@ COPY ./app/processor /application/app/processor
 # Database Specific
 COPY ./app/database /application/app/database
 
-RUN deno cache /application/app/processor/index.ts
+RUN deno cache /application/app/processor/main.ts
 
-CMD ["deno", "run", "-A", "/application/app/processor/index.ts"]
+CMD ["deno", "run", "-A", "/application/app/processor/main.ts"]

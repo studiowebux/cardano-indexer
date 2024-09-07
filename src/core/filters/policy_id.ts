@@ -1,12 +1,18 @@
 import type Logger from "@studiowebux/deno-minilog";
+import type PromClient from "prom-client";
 import type { LocalBlock, Transaction } from "../../shared/types.ts";
 import { Filter } from "./index.ts";
 
 export class PolicyId extends Filter {
   private policy_id: string;
 
-  constructor(id: string, logger: Logger, policy_id: string) {
-    super(id, logger);
+  constructor(
+    id: string,
+    logger: Logger,
+    policy_id: string,
+    prom_client: typeof PromClient | null = null,
+  ) {
+    super(id, logger, prom_client);
     this.policy_id = policy_id;
 
     this.logger.info(`Initializing policy id: ${this.policy_id}`);
@@ -22,6 +28,9 @@ export class PolicyId extends Filter {
         ),
       )
     ) {
+      if (this.metric) {
+        this.metric.inc(1);
+      }
       this.logger.info(
         `policy id ${this.policy_id} found in block height: ${block.height}`,
       );

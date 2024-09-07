@@ -5,6 +5,7 @@ export type Cursor = { id: string; slot: number };
 export type Transaction = {
   scripts: Record<string, { language: string; json: object }>;
   outputs: { address: string; value: Record<string, object[]> }[];
+  inputs: { address: string; value: Record<string, object[]> }[];
 };
 
 export type LocalBlock = Block & {
@@ -25,4 +26,10 @@ export type ProcessorInput = {
   block: LocalBlock | null;
   matches: Record<string, Match>;
   rollback: Tip | Origin | undefined;
+};
+
+export type Status = {
+  started_at: Date | undefined;
+  stopped_at: Date | undefined;
+  state: "ACTIVE" | "INACTIVE";
 };

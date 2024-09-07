@@ -1,3 +1,5 @@
 .env
 .env.prod
+
 mongo_data/
+app/monitoring/prometheus/data
