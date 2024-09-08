@@ -19,7 +19,7 @@ import type { Status } from "../../src/shared/types.ts";
 const app = new Hono();
 
 app.use("/*", cors());
-app.use(hono_logger());
+app.use("/api/*", hono_logger());
 
 const logger = new Logger();
 
@@ -38,11 +38,11 @@ app.get("/metrics", async (c: Context) => {
   return c.text(await prom_client.register.metrics());
 });
 
-app.get("/status", (c: Context) => {
+app.get("/api/status", (c: Context) => {
   return c.json(status);
 });
 
-app.post("/stop", async (c: Context) => {
+app.post("/api/stop", async (c: Context) => {
   await consumer.stop();
   status.state = "INACTIVE";
   status.started_at = undefined;
@@ -50,7 +50,7 @@ app.post("/stop", async (c: Context) => {
   return c.json(status);
 });
 
-app.post("/start", (c: Context) => {
+app.post("/api/start", (c: Context) => {
   status.state = "ACTIVE";
   status.started_at = new Date();
   status.stopped_at = undefined;

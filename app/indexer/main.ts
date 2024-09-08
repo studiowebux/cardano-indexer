@@ -12,7 +12,7 @@ import { get_cursor, upsert_cursor } from "../database/queries.ts";
 const app = new Hono();
 
 app.use("/*", cors());
-app.use(hono_logger());
+app.use("/api/*", hono_logger());
 
 const logger = new Logger();
 const hooks = new Hooks(logger);
@@ -61,31 +61,31 @@ app.get("/metrics", async (c: Context) => {
   return c.text(await indexer.GetMetrics());
 });
 
-app.get("/health", async (c: Context) => {
+app.get("/api/health", async (c: Context) => {
   return c.json(await indexer.GetOgmiosServerHealth());
 });
 
-app.get("/status", (c: Context) => {
+app.get("/api/status", (c: Context) => {
   return c.json(indexer.GetStatus());
 });
 
-app.post("/stop", async (c: Context) => {
+app.post("/api/stop", async (c: Context) => {
   await indexer.Stop();
   return c.json(indexer.GetStatus());
 });
 
-app.post("/start", async (c: Context) => {
+app.post("/api/start", async (c: Context) => {
   await indexer.Initialize();
   await indexer.ConnectAndStart();
   return c.json(indexer.GetStatus());
 });
 
-app.post("/snapshot", async (c: Context) => {
+app.post("/api/snapshot", async (c: Context) => {
   await indexer.SaveCursor();
   return c.json(indexer.GetCurrentIntersection());
 });
 
-app.get("/cursor", (c: Context) => {
+app.get("/api/cursor", (c: Context) => {
   return c.json(indexer.GetCurrentIntersection());
 });
 
