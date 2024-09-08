@@ -176,6 +176,7 @@ export class Indexer {
         this.logger.warn("Indexer already stopped.");
         return this;
       }
+
       try {
         await this.client?.shutdown();
         this.client = null;
@@ -219,12 +220,20 @@ export class Indexer {
         this.queued_intersection,
       );
       await this.upsert_cursor(this.logger, this.queued_intersection);
+      // Set the start point to the current point
+      this.start_point = this.queued_intersection
+        ? [this.queued_intersection]
+        : ["origin"];
     } else if (this.current_intersection) {
       this.logger.info(
         "Save cursor (from current intersection) at",
         this.current_intersection,
       );
       await this.upsert_cursor(this.logger, this.current_intersection);
+      // Set the start point to the current point
+      this.start_point = this.current_intersection
+        ? [this.current_intersection]
+        : ["origin"];
     } else {
       this.logger.error("Unable to save the cursor.");
       this.Stop();
@@ -297,7 +306,12 @@ export class Indexer {
       if (!state.ready) {
         this.logger.error("Websocket connection is not ready.");
       }
-      requestNextBlock();
+      try {
+        requestNextBlock();
+      } catch (e) {
+        console.error(e);
+        this.logger.error("An error occured while requesting next block.");
+      }
     }
   }
 
@@ -404,6 +418,7 @@ export class Indexer {
 
   async Process(block: LocalBlock): Promise<Indexer> {
     try {
+      this.logger.info("Process block:", block.id);
       // Sometimes the slot is undefined
       this.indexer_tip_slot.set(block.slot || -1);
       this.indexer_tip_height.set(block.height || -1);
@@ -561,9 +576,9 @@ export class Indexer {
     return await getServerHealth({ connection });
   }
 
-  GetSocketState(): { ready: number } {
+  GetSocketState(): { ready: number | undefined } {
     return {
-      ready: (this.client?.context.socket as WebSocket).readyState,
+      ready: (this.client?.context?.socket as WebSocket)?.readyState,
     };
   }
 }
