@@ -19,5 +19,6 @@ export const context = async (logger: Logger, indexer?: Indexer) =>
         host: env.OGMIOS_HOST,
         port: parseInt(env.OGMIOS_PORT),
       },
+      maxEventListeners: 500,
     },
   );

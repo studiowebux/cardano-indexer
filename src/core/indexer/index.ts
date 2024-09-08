@@ -141,15 +141,20 @@ export class Indexer {
       this.local_queue_size.reset();
       this.indexer_tip_synced.reset();
 
-      const intersection = await this.client?.resume(
-        this.start_point as Point[],
-      );
-      this.logger.info("Ogmios Client Started.");
-      this.indexer_running.set(1);
-      this.current_intersection = intersection?.intersection as Cursor;
-      this.status.started_at = new Date();
-      this.status.stopped_at = undefined;
-      this.status.state = "ACTIVE";
+      try {
+        const intersection = await this.client?.resume(
+          this.start_point as Point[],
+        );
+        this.logger.info("Ogmios Client Started.");
+        this.indexer_running.set(1);
+        this.current_intersection = intersection?.intersection as Cursor;
+        this.status.started_at = new Date();
+        this.status.stopped_at = undefined;
+        this.status.state = "ACTIVE";
+      } catch (e) {
+        this.logger.error("An error occured while resuming.");
+        this.logger.error(e);
+      }
     });
 
     return this;
@@ -161,12 +166,22 @@ export class Indexer {
         this.logger.warn("Indexer already stopped.");
         return this;
       }
-      await this.client?.shutdown();
-      this.client = null;
-      this.logger.info("Ogmios Client Stopped.");
-      await this.producer.disconnect();
-      this.logger.info("Kafka Producer Stopped.");
+      try {
+        await this.client?.shutdown();
+        this.client = null;
+        this.logger.info("Ogmios Client Stopped.");
+      } catch (e) {
+        this.logger.error("An error occured while stopping ogmios.");
+        this.logger.error(e);
+      }
 
+      try {
+        await this.producer.disconnect();
+        this.logger.info("Kafka Producer Stopped.");
+      } catch (e) {
+        this.logger.error("An error occured while disconnecting producer.");
+        this.logger.error(e);
+      }
       this.status.started_at = undefined;
       this.status.stopped_at = new Date();
       this.status.state = "INACTIVE";
@@ -347,6 +362,16 @@ export class Indexer {
           sequential: true,
         },
       );
+
+      // Debugging
+      // 2024-09-07: seems to hang every ~2H
+      (this.client?.context.socket as any).on("close", (e: any) =>
+        this.logger.error("Ogmios closed", e),
+      );
+      (this.client?.context.socket as any).on("error", (e: any) =>
+        this.logger.error("Ogmios errored", e),
+      );
+      // this.client?.context.socket.on("message", (msg: any) => console.log(msg));
     } catch (e) {
       this.logger.error("Failed to initialize.");
       this.logger.error(e);

@@ -2,7 +2,6 @@ import { Hono, type Context } from "hono";
 import { logger as hono_logger } from "hono/logger";
 import { cors } from "hono/cors";
 import PromClient from "prom-client";
-
 import Logger from "@studiowebux/deno-minilog";
 
 import { Hooks } from "../../src/core/hook/index.ts";
