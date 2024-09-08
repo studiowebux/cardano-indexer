@@ -11,12 +11,12 @@ import { get_cursor, upsert_cursor } from "../database/queries.ts";
 
 const app = new Hono();
 
-app.use("/*", cors());
-app.use("/api/*", hono_logger());
-
 const logger = new Logger();
 const hooks = new Hooks(logger);
 const prom_client: typeof PromClient = PromClient;
+
+app.use("/*", cors());
+app.use("/api/*", hono_logger());
 
 hooks.Enable(
   new WalletAddress(
@@ -47,10 +47,10 @@ const indexer = new Indexer(
   logger,
   typeof start === "string"
     ? [start]
-    : [{ id: start.cursor_id, slot: start.slot }],
+    : [{ id: start.cursor_id, slot: start.slot, height: 0 }], // Height is unknown at this point and not required.
   6,
   upsert_cursor,
-  60 * 1000 * 15, // every 15 minutes snapshot the cursor in case it crashes, it will start from the cursor.
+  60 * 1000 * 5, // every 5 minutes snapshot the cursor in case it crashes, it will start from the cursor.
   prom_client,
 );
 
@@ -63,6 +63,14 @@ app.get("/metrics", async (c: Context) => {
 
 app.get("/api/health", async (c: Context) => {
   return c.json(await indexer.GetOgmiosServerHealth());
+});
+
+app.get("/api/sysinfo", (c: Context) => {
+  return c.json({
+    load_avg: Deno.loadavg(),
+    memory_usage: Deno.memoryUsage(),
+    memory_info: Deno.systemMemoryInfo(),
+  });
 });
 
 app.get("/api/status", (c: Context) => {

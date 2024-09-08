@@ -15,7 +15,7 @@ import type { Document, UpdateResult } from "mongodb";
 import { hrtime } from "node:process";
 import type { ServerHealth } from "@cardano-ogmios/client";
 
-import type { Cursor, LocalBlock, Match, Status } from "../../shared/types.ts";
+import type { LocalBlock, Match, Status } from "../../shared/types.ts";
 import { kafkaProducer } from "../../shared/kafka/index.ts";
 import { BLOCK_TOPIC } from "../../shared/constant.ts";
 
@@ -37,9 +37,9 @@ import {
 export class Indexer {
   private client: ChainSynchronization.ChainSynchronizationClient | null = null; // ogmios client
   private producer: Producer; // kafka producer
-  private start_point: string[] | Cursor[] = [];
-  private current_intersection: Cursor | null = null;
-  private queued_intersection: Cursor | null = null;
+  private start_point: string[] | Tip[] = [];
+  private current_intersection: Tip | null = null;
+  private queued_intersection: Tip | null = null;
   private local_queue: { block: LocalBlock; matches: Record<string, Match> }[] =
     [];
   private block_to_wait: number = 6;
@@ -54,7 +54,7 @@ export class Indexer {
   private upsert_cursor:
     | ((
         logger: Logger,
-        cursor: Cursor | "origin",
+        cursor: Tip | Origin,
       ) => Promise<UpdateResult<Document> | void>)
     | undefined;
 
@@ -72,12 +72,12 @@ export class Indexer {
   constructor(
     hooks: Hooks,
     logger: Logger,
-    start_point: string[] | Cursor[] = ["origin"],
+    start_point: string[] | Tip[] = ["origin"],
     block_to_wait = 6,
     upsert_cursor:
       | ((
           logger: Logger,
-          cursor: Cursor | "origin",
+          cursor: Tip | Origin,
         ) => Promise<UpdateResult<Document> | void>)
       | undefined = undefined,
     snapshot_interval = 60 * 1000,
@@ -102,11 +102,17 @@ export class Indexer {
     this.producer = kafkaProducer.producer();
     this.Setup();
 
-    this.producer.on("producer.disconnect", () => {
-      this.logger.warn("Kafka producer disconnected.");
+    this.producer.on("producer.disconnect", (d) => {
+      this.logger.warn("Kafka producer disconnected.", d);
     });
-    this.producer.on("producer.network.request_timeout", () => {
-      this.logger.error("Kafka producer request has timeout.");
+    this.producer.on("producer.network.request_timeout", (t) => {
+      this.logger.error("Kafka producer request has timeout.", t);
+    });
+    this.producer.on("producer.network.request", (r) => {
+      this.logger.info("Kafka producer request.", r);
+    });
+    this.producer.on("producer.network.request_queue_size", (q) => {
+      this.logger.info("Kafka producer request queue size.", q);
     });
 
     this.prom_client = prom_client;
@@ -144,10 +150,14 @@ export class Indexer {
       try {
         const intersection = await this.client?.resume(
           this.start_point as Point[],
+          100,
         );
-        this.logger.info("Ogmios Client Started.");
+        this.logger.info(
+          "Ogmios Client Started. At",
+          intersection?.intersection,
+        );
         this.indexer_running.set(1);
-        this.current_intersection = intersection?.intersection as Cursor;
+        this.current_intersection = intersection?.intersection as Tip;
         this.status.started_at = new Date();
         this.status.stopped_at = undefined;
         this.status.state = "ACTIVE";
@@ -198,14 +208,6 @@ export class Indexer {
     return this;
   }
 
-  GetStatus(): Status {
-    return this.status;
-  }
-
-  GetCurrentIntersection(): Cursor | null {
-    return this.current_intersection;
-  }
-
   async SaveCursor(): Promise<Indexer> {
     if (!this.upsert_cursor) {
       return this;
@@ -231,17 +233,23 @@ export class Indexer {
     return this;
   }
 
-  async GetOgmiosServerHealth(): Promise<ServerHealth> {
-    const ctx = await context(this.logger);
-    return await getServerHealth({ connection: ctx.connection });
-  }
-
   async RollForward(
     { block, tip }: { block: LocalBlock; tip: Tip | Origin },
     requestNextBlock: () => void,
   ): Promise<void> {
     const start = hrtime();
     try {
+      if (
+        tip !== "origin" &&
+        this.current_intersection &&
+        this.current_intersection.slot - tip.slot === 0
+      ) {
+        this.logger.error(
+          "The indexer might be stuck (or rollbacked) at",
+          this.current_intersection?.slot,
+          tip.slot,
+        );
+      }
       // Track Block size over time.
       this.block_size_histogram.observe(
         { blockSize: "bytes" },
@@ -251,11 +259,15 @@ export class Indexer {
       if (!block.slot) {
         this.logger.warn("Block slot is undefined", block);
       }
-      this.current_intersection = { id: block.id, slot: block.slot };
+      this.current_intersection = {
+        id: block.id,
+        slot: block.slot,
+        height: block.height,
+      };
       await this.ProcessQueue(tip);
       await this.Process(block);
 
-      if (tip !== "origin" && tip.slot === block.slot) {
+      if (tip !== "origin" && tip.height === block.height) {
         if (this.tip_synced === false) {
           this.indexer_tip_synced.set(1);
           this.logger.info("Tip is synced", tip);
@@ -269,10 +281,9 @@ export class Indexer {
 
         this.tip_synced = false;
       }
-
       requestNextBlock();
     } catch (e) {
-      this.logger.error("Failed to roll forward.");
+      this.logger.error("Failed to roll forward.", block, tip);
       this.logger.error(e);
       this.Stop();
     } finally {
@@ -286,7 +297,7 @@ export class Indexer {
   }
 
   async RollBackard(
-    { point }: { point: "origin" | Point },
+    { point, tip }: { point: Origin | Point; tip: Origin | Tip },
     requestNextBlock: () => void,
   ): Promise<void> {
     const start = hrtime();
@@ -294,13 +305,13 @@ export class Indexer {
     try {
       // Reset cursor
       if (this.upsert_cursor) {
-        await this.upsert_cursor(this.logger, point);
+        await this.upsert_cursor(this.logger, tip);
       }
       if (point !== "origin") {
-        this.current_intersection = point;
+        this.current_intersection = tip !== "origin" ? tip : null;
         // Clean the local queue
         this.local_queue = this.local_queue.filter(
-          (lq) => lq.block.slot < point.slot,
+          (lq) => lq.block.height < (tip !== "origin" ? tip.height : 0),
         );
       } else {
         this.current_intersection = null;
@@ -354,9 +365,9 @@ export class Indexer {
           ) => this.RollForward({ block, tip }, requestNextBlock),
 
           rollBackward: (
-            { point }: { point: Origin | Point; tip: Origin | Tip },
+            { point, tip }: { point: Origin | Point; tip: Origin | Tip },
             requestNextBlock: () => void,
-          ) => this.RollBackard({ point }, requestNextBlock),
+          ) => this.RollBackard({ point, tip }, requestNextBlock),
         },
         {
           sequential: true,
@@ -365,6 +376,7 @@ export class Indexer {
 
       // Debugging
       // 2024-09-07: seems to hang every ~2H
+      // 2024-09-08: hanged but no clog from here.
       (this.client?.context.socket as any).on("close", (e: any) =>
         this.logger.error("Ogmios closed", e),
       );
@@ -429,6 +441,7 @@ export class Indexer {
       this.current_intersection = {
         id: data.block.id,
         slot: data.block.slot,
+        height: data.block.height,
       };
     } catch (e) {
       this.logger.error(
@@ -452,8 +465,8 @@ export class Indexer {
         for (const queued_block of this.local_queue) {
           if (
             tip !== "origin" &&
-            tip.slot &&
-            tip.slot - queued_block.block.slot > this.block_to_wait
+            tip.height &&
+            tip.height - queued_block.block.height > this.block_to_wait
           ) {
             await this.Publish(queued_block);
             processed_blocks.push(queued_block.block.id);
@@ -463,12 +476,17 @@ export class Indexer {
           (lq) => !processed_blocks.includes(lq.block.id),
         );
         this.local_queue_size.set(this.local_queue.length);
+        this.logger.info(
+          "Remaining block(s) in local queue: ",
+          this.local_queue.length,
+        );
 
         // Tracking the queue intersection to save the cursor at the correct location to avoid losing queued blocks.
         if (this.local_queue.length > 0) {
           this.queued_intersection = {
             id: this.local_queue[0].block.id,
             slot: this.local_queue[0].block.slot,
+            height: this.local_queue[0].block.height,
           };
         } else {
           this.queued_intersection = null;
@@ -513,7 +531,24 @@ export class Indexer {
     return this;
   }
 
+  //
+  // Getters
+  //
+
   GetMetrics(): Promise<string> {
     return this.prom_client.register.metrics();
+  }
+
+  GetStatus(): Status {
+    return this.status;
+  }
+
+  GetCurrentIntersection(): Tip | null {
+    return this.current_intersection;
+  }
+
+  async GetOgmiosServerHealth(): Promise<ServerHealth> {
+    const ctx = await context(this.logger);
+    return await getServerHealth({ connection: ctx.connection });
   }
 }

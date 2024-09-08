@@ -3,7 +3,7 @@ import type PromClient from "prom-client";
 
 import type { LocalBlock, Match } from "../../shared/types.ts";
 import type { IFilter } from "../types.ts";
-import { Counter, Gauge } from "prom-client";
+import type { Counter } from "prom-client";
 
 export class Filter implements IFilter {
   readonly id: string;

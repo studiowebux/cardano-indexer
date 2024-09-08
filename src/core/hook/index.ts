@@ -19,21 +19,27 @@ export class Hooks implements IFilter {
   }
 
   async Match(block: LocalBlock): Promise<Record<string, Match>> {
-    if (this.filters.length === 0) {
-      this.logger.error("No filters enabled.");
-      return { ["NO_FILTER"]: { matches: false, id: "NO_FILTER" } };
-    }
+    try {
+      if (!this.HasFilters()) {
+        this.logger.error("No filters enabled.");
+        return { ["NO_FILTER"]: { matches: false, id: "NO_FILTER" } };
+      }
 
-    // Execute all filters in parallel
-    const matchPromises = this.filters.map((filter) => filter.Match(block));
-    const results = await Promise.all(matchPromises);
-    const matches: Record<string, Match> = {};
-    results.map((result) =>
-      Object.entries(result).forEach(([_key, item]) => {
-        matches[item.id] = item;
-      }),
-    );
-    return matches;
+      // Execute all filters in parallel
+      const matchPromises = this.filters.map((filter) => filter.Match(block));
+      const results = await Promise.all(matchPromises);
+      const matches: Record<string, Match> = {};
+      results.map((result) =>
+        Object.entries(result).forEach(([_key, item]) => {
+          matches[item.id] = item;
+        }),
+      );
+      return matches;
+    } catch (e) {
+      this.logger.error("An error occured in the Hook");
+      this.logger.error(e);
+      throw new Error(e);
+    }
   }
 
   HasFilters(): boolean {

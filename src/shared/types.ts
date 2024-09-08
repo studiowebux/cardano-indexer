@@ -1,7 +1,5 @@
 import type { Block, Origin, Tip } from "@cardano-ogmios/schema";
 
-export type Cursor = { id: string; slot: number };
-
 export type Transaction = {
   scripts: Record<string, { language: string; json: object }>;
   outputs: { address: string; value: Record<string, object[]> }[];

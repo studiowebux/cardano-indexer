@@ -1,10 +1,11 @@
 import type { Collection, Document, Filter } from "mongodb";
 import type Logger from "@studiowebux/deno-minilog";
 
-import type { Cursor, LocalBlock } from "../../src/shared/types.ts";
+import type { LocalBlock } from "../../src/shared/types.ts";
+import type { Origin, Tip } from "@cardano-ogmios/schema";
 import { cursor_collection, blocks_collection } from "./db.ts";
 
-export async function upsert_cursor(logger: Logger, cursor: Cursor | "origin") {
+export async function upsert_cursor(logger: Logger, cursor: Tip | Origin) {
   if (typeof cursor === "string" && cursor === "origin") {
     await delete_all_documents(logger, cursor_collection);
     return;
@@ -14,6 +15,7 @@ export async function upsert_cursor(logger: Logger, cursor: Cursor | "origin") {
     $set: {
       cursor_id: cursor.id,
       slot: cursor.slot,
+      height: cursor.height,
       last_updated_at: new Date(),
     },
   };
