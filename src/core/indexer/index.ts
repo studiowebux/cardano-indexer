@@ -281,7 +281,6 @@ export class Indexer {
 
         this.tip_synced = false;
       }
-      requestNextBlock();
     } catch (e) {
       this.logger.error("Failed to roll forward.", block, tip);
       this.logger.error(e);
@@ -293,6 +292,12 @@ export class Indexer {
         { task: "rollForward" },
         end[0] + end[1] / Math.pow(10, 9),
       );
+
+      const state = this.GetSocketState();
+      if (!state.ready) {
+        this.logger.error("Websocket connection is not ready.");
+      }
+      requestNextBlock();
     }
   }
 
@@ -323,8 +328,6 @@ export class Indexer {
       this.tip_synced = false;
 
       await this.Rollback(point);
-
-      requestNextBlock();
     } catch (e) {
       this.logger.error("Failed to roll backward.");
       this.logger.error(e);
@@ -336,6 +339,12 @@ export class Indexer {
         { task: "rollBackward" },
         end[0] + end[1] / Math.pow(10, 9),
       );
+
+      const state = this.GetSocketState();
+      if (!state.ready) {
+        this.logger.error("Websocket connection is not ready.");
+      }
+      requestNextBlock();
     }
   }
 
@@ -356,33 +365,33 @@ export class Indexer {
         return this;
       }
       this.logger.info("Initialize indexer.");
+      const ctx = await context(this.logger, this);
       this.client = await createChainSynchronizationClient(
-        await context(this.logger, this),
+        ctx,
         {
           rollForward: (
             { block, tip }: { block: LocalBlock; tip: Tip | Origin },
             requestNextBlock: () => void,
-          ) => this.RollForward({ block, tip }, requestNextBlock),
+          ) =>
+            this.RollForward({ block, tip }, requestNextBlock).catch((e) => {
+              console.error("Roll Forward errored", e);
+              this.logger.error("Roll Forward errored", e);
+            }),
 
           rollBackward: (
             { point, tip }: { point: Origin | Point; tip: Origin | Tip },
             requestNextBlock: () => void,
-          ) => this.RollBackard({ point, tip }, requestNextBlock),
+          ) =>
+            this.RollBackard({ point, tip }, requestNextBlock).catch((e) => {
+              console.error("Roll Backward errored", e);
+              this.logger.error("Roll Backward errored", e);
+            }),
         },
         {
           sequential: true,
         },
       );
 
-      // Debugging
-      // 2024-09-07: seems to hang every ~2H
-      // 2024-09-08: hanged but no clog from here.
-      (this.client?.context.socket as any).on("close", (e: any) =>
-        this.logger.error("Ogmios closed", e),
-      );
-      (this.client?.context.socket as any).on("error", (e: any) =>
-        this.logger.error("Ogmios errored", e),
-      );
       // this.client?.context.socket.on("message", (msg: any) => console.log(msg));
     } catch (e) {
       this.logger.error("Failed to initialize.");
@@ -548,7 +557,13 @@ export class Indexer {
   }
 
   async GetOgmiosServerHealth(): Promise<ServerHealth> {
-    const ctx = await context(this.logger);
-    return await getServerHealth({ connection: ctx.connection });
+    const connection = this.client?.context.connection;
+    return await getServerHealth({ connection });
+  }
+
+  GetSocketState(): { ready: number } {
+    return {
+      ready: (this.client?.context.socket as WebSocket).readyState,
+    };
   }
 }

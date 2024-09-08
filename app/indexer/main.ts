@@ -97,6 +97,10 @@ app.get("/api/cursor", (c: Context) => {
   return c.json(indexer.GetCurrentIntersection());
 });
 
+app.get("/api/socket/status", (c: Context) => {
+  return c.json(indexer.GetSocketState());
+});
+
 Deno.serve({ port: 3310 }, app.fetch);
 
 Deno.addSignalListener("SIGINT", async () => {
