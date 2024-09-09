@@ -32,6 +32,7 @@ import {
   published_counter,
   local_queue_size,
   indexer_tip_synced,
+  indexer_error_count,
 } from "../../shared/prometheus/indexer.ts";
 
 export class Indexer {
@@ -39,6 +40,7 @@ export class Indexer {
   private producer: Producer; // kafka producer
   private start_point: string[] | Tip[] = [];
   private current_intersection: Tip | null = null;
+  private last_current_intersection: Tip | null = null;
   private queued_intersection: Tip | null = null;
   private local_queue: { block: LocalBlock; matches: Record<string, Match> }[] =
     [];
@@ -68,6 +70,10 @@ export class Indexer {
   private indexer_tip_height: Gauge;
   private local_queue_size: Gauge;
   private indexer_tip_synced: Gauge;
+  private indexer_error_count: Counter;
+
+  private statusInterval: ReturnType<typeof setInterval> | undefined;
+  private snapshotInterval: ReturnType<typeof setInterval> | undefined;
 
   constructor(
     hooks: Hooks,
@@ -125,11 +131,7 @@ export class Indexer {
     this.block_size_histogram = block_size_histogram;
     this.local_queue_size = local_queue_size;
     this.indexer_tip_synced = indexer_tip_synced;
-
-    setInterval(async () => {
-      this.logger.info("Saving cursor to database.");
-      await this.SaveCursor();
-    }, this.snapshot_interval);
+    this.indexer_error_count = indexer_error_count;
   }
 
   Setup(): Indexer {
@@ -146,12 +148,14 @@ export class Indexer {
       this.block_size_histogram.reset();
       this.local_queue_size.reset();
       this.indexer_tip_synced.reset();
+      this.indexer_error_count.reset();
 
       try {
         const intersection = await this.client?.resume(
           this.start_point as Point[],
           100,
         );
+
         this.logger.info(
           "Ogmios Client Started. At",
           intersection?.intersection,
@@ -196,6 +200,9 @@ export class Indexer {
       this.status.started_at = undefined;
       this.status.stopped_at = new Date();
       this.status.state = "INACTIVE";
+
+      clearInterval(this.snapshotInterval);
+      clearInterval(this.statusInterval);
 
       await this.SaveCursor();
       this.indexer_running.set(0);
@@ -369,6 +376,12 @@ export class Indexer {
     }
     this.logger.info("Connect and start the indexer.");
     await this.producer.connect();
+
+    this.snapshotInterval = setInterval(async () => {
+      this.logger.info("Saving cursor to database.");
+      await this.SaveCursor();
+    }, this.snapshot_interval);
+
     return this;
   }
 
@@ -406,7 +419,29 @@ export class Indexer {
         },
       );
 
-      // this.client?.context.socket.on("message", (msg: any) => console.log(msg));
+      this.statusInterval = setInterval(
+        async () => {
+          if (
+            this.current_intersection?.slot ===
+            this.last_current_intersection?.slot
+          ) {
+            this.indexer_error_count.inc();
+            this.logger.error(
+              "The Indexer is probably stuck for an unknown reason. (See troubleshooting)",
+            );
+            this.logger.info(
+              "Trying to automatically restart the indexer",
+              this.GetStatus(),
+            );
+            await this.Stop();
+            await this.Initialize();
+            await this.ConnectAndStart();
+            this.logger.info(this.GetStatus());
+          }
+          this.last_current_intersection = this.current_intersection;
+        },
+        60 * 1000 * 1,
+      ); // Every minute check if the ogmios client is stuck or not.
     } catch (e) {
       this.logger.error("Failed to initialize.");
       this.logger.error(e);

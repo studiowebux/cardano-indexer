@@ -51,3 +51,9 @@ export const indexer_tip_synced = new prom_client.Gauge({
   name: "indexer_tip_synced",
   help: "Track indexer Tip synchronosity.",
 });
+
+export const indexer_error_count = new prom_client.Counter({
+  name: "indexer_error_count",
+  help: "Number of errors.",
+  labelNames: ["error"],
+});
