@@ -4,12 +4,12 @@ import type { LocalBlock, Transaction } from "../../shared/types.ts";
 import { Filter } from "./index.ts";
 
 export class PolicyId extends Filter {
-  private policy_id: string;
+  private policy_id: string[];
 
   constructor(
     id: string,
     logger: Logger,
-    policy_id: string,
+    policy_id: string[],
     prom_client: typeof PromClient | null = null,
   ) {
     super(id, logger, prom_client);
@@ -20,11 +20,10 @@ export class PolicyId extends Filter {
 
   Match(block: LocalBlock) {
     if (
-      block.transactions &&
-      block.transactions.length > 0 &&
-      block.transactions.some((transaction: Transaction) =>
-        Object.keys(transaction?.scripts || {}).some(
-          (script_key) => script_key === this.policy_id,
+      block?.transactions?.length > 0 &&
+      block?.transactions?.some((transaction: Transaction) =>
+        Object.keys(transaction?.scripts || {}).some((script_key) =>
+          this.policy_id.includes(script_key),
         ),
       )
     ) {

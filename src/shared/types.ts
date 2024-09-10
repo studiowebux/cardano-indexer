@@ -14,8 +14,8 @@ export type LocalBlock = Block & {
 
 export type Match = {
   matches: boolean;
-  policy_id?: string;
-  wallet_address?: string;
+  policy_id?: string[];
+  wallet_address?: string[];
   rollback?: Tip | Origin;
   id: string;
 };

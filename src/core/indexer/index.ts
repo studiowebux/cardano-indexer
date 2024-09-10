@@ -450,7 +450,7 @@ export class Indexer {
 
   async Process(block: LocalBlock): Promise<Indexer> {
     try {
-      this.logger.info("Process block:", block.id);
+      // this.logger.info("Process block:", block.id);
       // Sometimes the slot is undefined
       this.indexer_tip_slot.set(block.slot || -1);
       this.indexer_tip_height.set(block.height || -1);

@@ -20,9 +20,15 @@ app.use("/api/*", hono_logger());
 
 hooks.Enable(
   new WalletAddress(
-    "wallet_address_1",
+    "wallets",
     logger,
-    "addr1q8k3eglk7txg02ax9nuds8t399pd5vjn6cmk9drlq6reger80c088xejdvajl9fh5va2pzwqknpkrllgf3n4whup8lts2fds3w",
+    [
+      "addr1q8k3eglk7txg02ax9nuds8t399pd5vjn6cmk9drlq6reger80c088xejdvajl9fh5va2pzwqknpkrllgf3n4whup8lts2fds3w",
+      "addr1q9qur503rgx3duk9k5law0z09d9gq3mgt948cgmx8cv77ymlfwslu37u86tjlrljy9w60cf2c3dgh7pplmzg7f8zd35s9m3r5u",
+      "addr1qxf0w39qyuuyz2a5pukw8yj8yrwfceet59vsu3l5kk5kh8ml09mmle9rgt0ljcns8ydlwshk6ce4l0zwq9k9dx7g29pst6xcjj",
+      "addr1zxghhvqaa70gt7wvlwte8guvrffzd5h7sy8yh7dghcky0ttl09mmle9rgt0ljcns8ydlwshk6ce4l0zwq9k9dx7g29ps0c9zel",
+      "addr1qxfj8wk8k203pqeg3pghesm3yaqejeatum97htlc0njzul0nddzx2usmswe8wzylsn9xsxar5pk8tgmtzqt7n9zz8wzqwhtvpd",
+    ],
     prom_client,
   ),
 );

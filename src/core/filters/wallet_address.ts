@@ -5,12 +5,12 @@ import type { LocalBlock, Match, Transaction } from "../../shared/types.ts";
 import { Filter } from "./index.ts";
 
 export class WalletAddress extends Filter {
-  private wallet_address: string;
+  private wallet_address: string[];
 
   constructor(
     id: string,
     logger: Logger,
-    wallet_address: string,
+    wallet_address: string[],
     prom_client: typeof PromClient | null = null,
   ) {
     super(id, logger, prom_client);
@@ -21,16 +21,11 @@ export class WalletAddress extends Filter {
 
   Match(block: LocalBlock): Record<string, Match> {
     if (
-      block.transactions &&
-      block.transactions.length > 0 &&
-      block.transactions.some(
-        (transaction: Transaction) =>
-          Object.values(transaction?.outputs || {}).some(
-            (output) => output.address === this.wallet_address,
-          ) ||
-          Object.values(transaction?.inputs || {}).some(
-            (output) => output.address === this.wallet_address,
-          ),
+      block?.transactions?.length > 0 &&
+      block?.transactions?.some((transaction: Transaction) =>
+        Object.values(transaction?.outputs || {})
+          .concat(Object.values(transaction?.inputs || {}))
+          .some((output) => this.wallet_address.includes(output.address)),
       )
     ) {
       if (this.metric) {
