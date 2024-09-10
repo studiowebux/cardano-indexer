@@ -20,3 +20,21 @@ Started from origin
 Hang after few hours.
 
 ---
+
+My dummy check catched and rebooted the indexer
+
+```
+indexer-1  | 9/9/2024, 9:11:30 PM ERROR:   The Indexer is probably stuck for an unknown reason. (See troubleshooting)
+indexer-1  | 9/9/2024, 9:12:00 PM ERROR:   The indexer might be stuck (or rollbacked) at 134350021 134350021
+```
+
+---
+
+```
+tgingras@fedora:~/cardano-indexer-main$ docker compose logs indexer --tail 10000 | grep stuck
+indexer-1  | 9/10/2024, 2:11:34 AM ERROR:   The indexer might be stuck (or rollbacked) at 134367999 134367999
+indexer-1  | 9/10/2024, 2:13:01 AM ERROR:   The Indexer is probably stuck for an unknown reason. (See troubleshooting)
+indexer-1  | 9/10/2024, 2:14:01 AM ERROR:   The Indexer is probably stuck for an unknown reason. (See troubleshooting)
+```
+
+Once the tip is synced the issue occured frequently, will increase to 2 minutes to avoid it.

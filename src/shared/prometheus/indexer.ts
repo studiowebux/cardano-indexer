@@ -57,3 +57,15 @@ export const indexer_error_count = new prom_client.Counter({
   help: "Number of errors.",
   labelNames: ["error"],
 });
+
+export const indexer_stopped_count = new prom_client.Counter({
+  name: "indexer_stopped_count",
+  help: "Number of time stopped.",
+  labelNames: ["occurence"],
+});
+
+export const indexer_started_count = new prom_client.Counter({
+  name: "indexer_started_count",
+  help: "Number of time started.",
+  labelNames: ["occurence"],
+});

@@ -33,6 +33,8 @@ import {
   local_queue_size,
   indexer_tip_synced,
   indexer_error_count,
+  indexer_stopped_count,
+  indexer_started_count,
 } from "../../shared/prometheus/indexer.ts";
 
 export class Indexer {
@@ -71,6 +73,8 @@ export class Indexer {
   private local_queue_size: Gauge;
   private indexer_tip_synced: Gauge;
   private indexer_error_count: Counter;
+  private indexer_stopped_count: Counter;
+  private indexer_started_count: Counter;
 
   private statusInterval: ReturnType<typeof setInterval> | undefined;
   private snapshotInterval: ReturnType<typeof setInterval> | undefined;
@@ -132,24 +136,14 @@ export class Indexer {
     this.local_queue_size = local_queue_size;
     this.indexer_tip_synced = indexer_tip_synced;
     this.indexer_error_count = indexer_error_count;
+    this.indexer_stopped_count = indexer_stopped_count;
+    this.indexer_started_count = indexer_started_count;
   }
 
   Setup(): Indexer {
     this.logger.info(`Trying to start the indexer`);
     this.producer.on("producer.connect", async () => {
       this.logger.info("Kafka producer connected.");
-      // Reset metrics from prometheus
-      this.processing_counter.reset();
-      this.processing_histogram.reset();
-      this.published_counter.reset();
-      this.indexer_running.reset();
-      this.indexer_tip_slot.reset();
-      this.indexer_tip_height.reset();
-      this.block_size_histogram.reset();
-      this.local_queue_size.reset();
-      this.indexer_tip_synced.reset();
-      this.indexer_error_count.reset();
-
       try {
         const intersection = await this.client?.resume(
           this.start_point as Point[],
@@ -180,6 +174,7 @@ export class Indexer {
         this.logger.warn("Indexer already stopped.");
         return this;
       }
+      this.indexer_stopped_count.inc();
 
       try {
         await this.client?.shutdown();
@@ -374,6 +369,8 @@ export class Indexer {
       this.logger.warn("Indexer already running.");
       return this;
     }
+
+    this.indexer_started_count.inc();
     this.logger.info("Connect and start the indexer.");
     await this.producer.connect();
 
@@ -440,8 +437,8 @@ export class Indexer {
           }
           this.last_current_intersection = this.current_intersection;
         },
-        60 * 1000 * 1,
-      ); // Every minute check if the ogmios client is stuck or not.
+        60 * 1000 * 3,
+      ); // Every 3 minutes check if the ogmios client is stuck or not.
     } catch (e) {
       this.logger.error("Failed to initialize.");
       this.logger.error(e);

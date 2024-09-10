@@ -12,6 +12,6 @@ sudo chown 999:999 -R app/monitoring/prometheus/data/
 OR
 
 ```bash
-mkdir app/monitoring/prometheus/data/
+sudo mkdir app/monitoring/prometheus/data/
 sudo chown 999:999 -R app/monitoring/prometheus/data/
 ```
