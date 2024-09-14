@@ -1,12 +1,11 @@
 {
   "name": "@studiowebux/cindexer",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "exports": "./src/mod.ts",
   "imports": {
     "@cardano-ogmios/client": "npm:@cardano-ogmios/client",
     "@cardano-ogmios/schema": "npm:@cardano-ogmios/schema",
-    "@emurgo/cardano-serialization-lib-nodejs": "npm:@emurgo/cardano-serialization-lib-nodejs@12.0.1",
-    "@studiowebux/deno-minilog": "jsr:@studiowebux/deno-minilog@^0.1.0",
+    "@studiowebux/deno-minilog": "jsr:@studiowebux/deno-minilog@^0.3.0",
     "dotenv": "https://deno.land/std@0.224.0/dotenv/mod.ts",
     "kafkajs": "npm:kafkajs",
     "mongodb": "npm:mongodb",

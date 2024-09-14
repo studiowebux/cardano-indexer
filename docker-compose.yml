@@ -98,7 +98,7 @@ services:
       - indexer
 
   ogmios:
-    image: cardanosolutions/cardano-node-ogmios:latest
+    image: cardanosolutions/cardano-node-ogmios:v6.7.0_9.1.1-mainnet
     container_name: cardano-node-ogmios
     restart: unless-stopped
     ports:

@@ -19,6 +19,4 @@ export async function processMessage(
 
   await handle_rollback(logger, parsed);
   await handle_block(logger, parsed.block);
-
-  // If processing fails, you may want to implement retry logic here
 }
