@@ -1,7 +1,7 @@
 import type Logger from "@studiowebux/deno-minilog";
 import type PromClient from "prom-client";
 
-import type { LocalBlock, Match } from "../../shared/types.ts";
+import type { LocalBlock, MatchOutput } from "../../shared/types.ts";
 import { Filter } from "./index.ts";
 import type { Transaction } from "@cardano-ogmios/schema";
 
@@ -20,7 +20,7 @@ export class WalletAddress extends Filter {
     this.logger.info(`Initializing wallet address: ${this.wallet_address}`);
   }
 
-  Match(block: LocalBlock): Record<string, Match> {
+  Match(block: LocalBlock): Record<string, MatchOutput> {
     if (
       block?.transactions?.length > 0 &&
       // FIXME: Fix types here.

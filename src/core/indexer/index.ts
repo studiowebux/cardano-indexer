@@ -15,7 +15,7 @@ import type { Document, UpdateResult } from "mongodb";
 import { hrtime } from "node:process";
 import type { ServerHealth } from "@cardano-ogmios/client";
 
-import type { LocalBlock, Match, Status } from "../../shared/types.ts";
+import type { LocalBlock, MatchOutput, Status } from "../../shared/types.ts";
 import { kafkaProducer } from "../../shared/kafka/index.ts";
 import { BLOCK_TOPIC } from "../../shared/constant.ts";
 
@@ -44,8 +44,10 @@ export class Indexer {
   private current_intersection: Tip | null = null;
   private last_current_intersection: Tip | null = null;
   private queued_intersection: Tip | null = null;
-  private local_queue: { block: LocalBlock; matches: Record<string, Match> }[] =
-    [];
+  private local_queue: {
+    block: LocalBlock;
+    matches: Record<string, MatchOutput>;
+  }[] = [];
   private block_to_wait: number = 6;
   private hooks: Hooks;
   private tip_synced: boolean = false;
@@ -479,7 +481,7 @@ export class Indexer {
 
   async Publish(data: {
     block: LocalBlock;
-    matches: Record<string, Match>;
+    matches: Record<string, MatchOutput>;
   }): Promise<Indexer> {
     try {
       await this.producer.send({

@@ -1,7 +1,7 @@
 import type Logger from "@studiowebux/deno-minilog";
 import type PromClient from "prom-client";
 
-import type { LocalBlock } from "../../shared/types.ts";
+import type { LocalBlock, MatchOutput } from "../../shared/types.ts";
 import { Filter } from "./index.ts";
 import type { Transaction } from "@cardano-ogmios/schema";
 
@@ -20,7 +20,7 @@ export class PolicyId extends Filter {
     this.logger.info(`Initializing policy id: ${this.policy_id}`);
   }
 
-  Match(block: LocalBlock) {
+  Match(block: LocalBlock): Record<string, MatchOutput> {
     if (
       block?.transactions?.length > 0 &&
       block?.transactions?.some((transaction: Transaction) =>

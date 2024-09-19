@@ -1,5 +1,5 @@
 import type Logger from "@studiowebux/deno-minilog";
-import type { LocalBlock, Match } from "../../shared/types.ts";
+import type { LocalBlock, MatchOutput } from "../../shared/types.ts";
 import type { IFilter } from "../types.ts";
 import type { Filter } from "../filters/index.ts";
 
@@ -18,7 +18,7 @@ export class Hooks implements IFilter {
     return this;
   }
 
-  async Match(block: LocalBlock): Promise<Record<string, Match>> {
+  async Match(block: LocalBlock): Promise<Record<string, MatchOutput>> {
     try {
       if (!this.HasFilters()) {
         this.logger.error("No filters enabled.");
@@ -28,7 +28,7 @@ export class Hooks implements IFilter {
       // Execute all filters in parallel
       const matchPromises = this.filters.map((filter) => filter.Match(block));
       const results = await Promise.all(matchPromises);
-      const matches: Record<string, Match> = {};
+      const matches: Record<string, MatchOutput> = {};
       results.map((result) =>
         Object.entries(result).forEach(([_key, item]) => {
           matches[item.id] = item;

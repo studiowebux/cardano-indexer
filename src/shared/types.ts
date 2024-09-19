@@ -6,7 +6,7 @@ export type LocalBlock = Block & {
   transactions: Transaction[];
 };
 
-export type Match = {
+export type MatchOutput = {
   matches: boolean;
   policy_id?: string[];
   wallet_address?: string[];
@@ -16,7 +16,7 @@ export type Match = {
 
 export type ProcessorInput = {
   block: LocalBlock | null;
-  matches: Record<string, Match>;
+  matches: Record<string, MatchOutput>;
   rollback: Tip | Origin | undefined;
 };
 

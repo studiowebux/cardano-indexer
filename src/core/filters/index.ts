@@ -1,7 +1,7 @@
 import type Logger from "@studiowebux/deno-minilog";
 import type PromClient from "prom-client";
 
-import type { LocalBlock, Match } from "../../shared/types.ts";
+import type { LocalBlock, MatchOutput } from "../../shared/types.ts";
 import type { IFilter } from "../types.ts";
 import type { Counter } from "prom-client";
 
@@ -29,7 +29,7 @@ export class Filter implements IFilter {
 
   Match(
     _block: LocalBlock,
-  ): Promise<Record<string, Match>> | Record<string, Match> {
+  ): Promise<Record<string, MatchOutput>> | Record<string, MatchOutput> {
     throw new Error("Not implemented");
   }
 }

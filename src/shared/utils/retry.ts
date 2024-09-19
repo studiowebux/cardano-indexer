@@ -1,4 +1,4 @@
-export function wait_for(ms: number = 5000) {
+export function wait_for(ms: number = 5000): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
