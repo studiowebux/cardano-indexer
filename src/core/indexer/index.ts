@@ -4,11 +4,7 @@ import {
   createChainSynchronizationClient,
   getServerHealth,
 } from "@cardano-ogmios/client";
-import PromClient, {
-  type Counter,
-  type Gauge,
-  type Histogram,
-} from "prom-client";
+import type { Counter, Gauge, Histogram } from "prom-client";
 import type { Producer } from "kafkajs";
 import type Logger from "@studiowebux/deno-minilog";
 import type { Document, UpdateResult } from "mongodb";
@@ -35,6 +31,7 @@ import {
   indexer_error_count,
   indexer_stopped_count,
   indexer_started_count,
+  indexer_registry,
 } from "../../shared/prometheus/indexer.ts";
 
 export class Indexer {
@@ -64,7 +61,6 @@ export class Indexer {
       ) => Promise<UpdateResult<Document> | void>)
     | undefined;
 
-  private prom_client: typeof PromClient;
   private processing_histogram: Histogram;
   private block_size_histogram: Histogram;
   private processing_counter: Counter;
@@ -93,7 +89,6 @@ export class Indexer {
         ) => Promise<UpdateResult<Document> | void>)
       | undefined = undefined,
     snapshot_interval = 60 * 1000,
-    prom_client: typeof PromClient = PromClient,
   ) {
     this.logger = logger;
     this.start_point = start_point;
@@ -127,7 +122,6 @@ export class Indexer {
       this.logger.info("Kafka producer request queue size.", q);
     });
 
-    this.prom_client = prom_client;
     this.processing_histogram = processing_histogram;
     this.processing_counter = processing_counter;
     this.published_counter = published_counter;
@@ -594,7 +588,7 @@ export class Indexer {
   //
 
   GetMetrics(): Promise<string> {
-    return this.prom_client.register.metrics();
+    return indexer_registry.metrics();
   }
 
   GetStatus(): Status {

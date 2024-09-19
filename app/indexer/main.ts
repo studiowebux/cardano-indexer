@@ -56,7 +56,6 @@ const indexer = new Indexer(
   6,
   upsert_cursor,
   60 * 1000 * 5, // every 5 minutes snapshot the cursor in case it crashes, it will start from the cursor.
-  prom_client_indexer,
 );
 
 await indexer.Initialize();

@@ -10,6 +10,7 @@ export type MatchOutput = {
   matches: boolean;
   policy_id?: string[];
   wallet_address?: string[];
+  vkey?: string[];
   rollback?: Tip | Origin;
   id: string;
 };

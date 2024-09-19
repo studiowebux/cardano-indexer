@@ -12,8 +12,8 @@ import { exponentialRetry } from "../../src/shared/utils/retry.ts";
 import {
   consumer_counter,
   consumer_histogram,
-  prom_client_processor,
-} from "../../src/shared/prometheus/processor.ts";
+  processor_registry,
+} from "../../src/mod.ts";
 import type { Status } from "../../src/shared/types.ts";
 
 const app = new Hono();
@@ -35,7 +35,7 @@ const status: Status = {
 };
 
 app.get("/metrics", async (c: Context) => {
-  return c.text(await prom_client_processor.register.metrics());
+  return c.text(await processor_registry.metrics());
 });
 
 app.get("/api/status", (c: Context) => {
