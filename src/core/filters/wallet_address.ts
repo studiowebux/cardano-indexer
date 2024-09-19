@@ -1,8 +1,9 @@
 import type Logger from "@studiowebux/deno-minilog";
 import type PromClient from "prom-client";
 
-import type { LocalBlock, Match, Transaction } from "../../shared/types.ts";
+import type { LocalBlock, Match } from "../../shared/types.ts";
 import { Filter } from "./index.ts";
+import type { Transaction } from "@cardano-ogmios/schema";
 
 export class WalletAddress extends Filter {
   private wallet_address: string[];
@@ -22,9 +23,10 @@ export class WalletAddress extends Filter {
   Match(block: LocalBlock): Record<string, Match> {
     if (
       block?.transactions?.length > 0 &&
+      // FIXME: Fix types here.
       block?.transactions?.some((transaction: Transaction) =>
         Object.values(transaction?.outputs || {})
-          .concat(Object.values(transaction?.inputs || {}))
+          .concat(Object.values((transaction?.inputs as unknown) || {}))
           .some((output) => this.wallet_address.includes(output.address)),
       )
     ) {

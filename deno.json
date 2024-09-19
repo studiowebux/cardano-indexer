@@ -1,6 +1,6 @@
 {
-  "name": "@studiowebux/cindexer",
-  "version": "1.0.0",
+  "name": "@studiowebux/cardano-indexer",
+  "version": "0.0.1",
   "exports": "./src/mod.ts",
   "imports": {
     "@cardano-ogmios/client": "npm:@cardano-ogmios/client",

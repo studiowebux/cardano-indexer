@@ -1,10 +1,4 @@
-import type { Block, Origin, Tip } from "@cardano-ogmios/schema";
-
-export type Transaction = {
-  scripts: Record<string, { language: string; json: object }>;
-  outputs: { address: string; value: Record<string, object[]> }[];
-  inputs: { address: string; value: Record<string, object[]> }[];
-};
+import type { Block, Origin, Tip, Transaction } from "@cardano-ogmios/schema";
 
 export type LocalBlock = Block & {
   slot: number;

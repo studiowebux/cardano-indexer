@@ -1,0 +1,19 @@
+name: publish
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write # Needed for auth with Deno Deploy
+  contents: read # Needed to clone the repository
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x # Run with latest stable Deno.
+      - name: Release to JSR
+        run: deno publish --allow-dirty

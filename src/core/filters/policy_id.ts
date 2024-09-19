@@ -1,7 +1,9 @@
 import type Logger from "@studiowebux/deno-minilog";
 import type PromClient from "prom-client";
-import type { LocalBlock, Transaction } from "../../shared/types.ts";
+
+import type { LocalBlock } from "../../shared/types.ts";
 import { Filter } from "./index.ts";
+import type { Transaction } from "@cardano-ogmios/schema";
 
 export class PolicyId extends Filter {
   private policy_id: string[];

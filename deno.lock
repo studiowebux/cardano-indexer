@@ -6,8 +6,6 @@
       "jsr:@std/dotenv": "jsr:@std/dotenv@0.225.2",
       "jsr:@std/fmt@0.225.1": "jsr:@std/fmt@0.225.1",
       "jsr:@std/io@0.224.0": "jsr:@std/io@0.224.0",
-      "jsr:@studiowebux/deno-minilog@0.1.0": "jsr:@studiowebux/deno-minilog@0.1.0",
-      "jsr:@studiowebux/deno-minilog@^0.1.0": "jsr:@studiowebux/deno-minilog@0.1.0",
       "npm:@cardano-ogmios/client": "npm:@cardano-ogmios/client@6.5.0_ws@7.5.10",
       "npm:@cardano-ogmios/schema": "npm:@cardano-ogmios/schema@6.6.0",
       "npm:@emurgo/cardano-serialization-lib-nodejs@12.0.1": "npm:@emurgo/cardano-serialization-lib-nodejs@12.0.1",
@@ -29,9 +27,6 @@
       },
       "@std/io@0.224.0": {
         "integrity": "0aff885d21d829c050b8a08b1d71b54aed5841aecf227f8d77e99ec529a11e8e"
-      },
-      "@studiowebux/deno-minilog@0.1.0": {
-        "integrity": "796aa8864bb155725aa2c359200ee9318dba53a1af179231466fc0e277ecd866"
       }
     },
     "npm": {
@@ -267,10 +262,9 @@
     "dependencies": [
       "jsr:@hono/hono@^4.5.11",
       "jsr:@std/dotenv",
-      "jsr:@studiowebux/deno-minilog@^0.1.0",
+      "jsr:@studiowebux/deno-minilog@^0.3.0",
       "npm:@cardano-ogmios/client",
       "npm:@cardano-ogmios/schema",
-      "npm:@emurgo/cardano-serialization-lib-nodejs@12.0.1",
       "npm:kafkajs",
       "npm:mongodb",
       "npm:prom-client"
