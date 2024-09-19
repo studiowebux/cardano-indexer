@@ -13,3 +13,4 @@ export * from "./core/filters/index.ts";
 export * from "./core/filters/wallet_address.ts";
 export * from "./core/filters/policy_id.ts";
 export * from "./core/indexer/index.ts";
+export * from "./shared/prometheus/indexer.ts";

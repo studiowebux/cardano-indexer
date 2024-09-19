@@ -1,19 +1,18 @@
 import { Hono, type Context } from "hono";
 import { logger as hono_logger } from "hono/logger";
 import { cors } from "hono/cors";
-import PromClient from "prom-client";
 import Logger from "@studiowebux/deno-minilog";
 
 import { Hooks } from "../../src/core/hook/index.ts";
 import { WalletAddress } from "../../src/core/filters/wallet_address.ts";
 import { Indexer } from "../../src/core/indexer/index.ts";
 import { get_cursor, upsert_cursor } from "../database/queries.ts";
+import { prom_client_indexer } from "../../src/shared/prometheus/indexer.ts";
 
 const app = new Hono();
 
 const logger = new Logger();
 const hooks = new Hooks(logger);
-const prom_client: typeof PromClient = PromClient;
 
 app.use("/*", cors());
 app.use("/api/*", hono_logger());
@@ -29,7 +28,7 @@ hooks.Enable(
       "addr1zxghhvqaa70gt7wvlwte8guvrffzd5h7sy8yh7dghcky0ttl09mmle9rgt0ljcns8ydlwshk6ce4l0zwq9k9dx7g29ps0c9zel",
       "addr1qxfj8wk8k203pqeg3pghesm3yaqejeatum97htlc0njzul0nddzx2usmswe8wzylsn9xsxar5pk8tgmtzqt7n9zz8wzqwhtvpd",
     ],
-    prom_client,
+    prom_client_indexer,
   ),
 );
 
@@ -57,7 +56,7 @@ const indexer = new Indexer(
   6,
   upsert_cursor,
   60 * 1000 * 5, // every 5 minutes snapshot the cursor in case it crashes, it will start from the cursor.
-  prom_client,
+  prom_client_indexer,
 );
 
 await indexer.Initialize();
